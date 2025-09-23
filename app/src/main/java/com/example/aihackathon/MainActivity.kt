@@ -64,6 +64,9 @@ import com.example.aihackathon.ui.theme.AIHackathonTheme
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
+
+    val phoneNumber = "x"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -119,7 +122,7 @@ class MainActivity : ComponentActivity() {
                         hasPermission = granted
 
                         smsManager.sendTextMessage(
-                            "x", // recipient
+                            phoneNumber, // recipient
                             null,
                             textAreaText, // message
                             null,
@@ -204,7 +207,7 @@ class MainActivity : ComponentActivity() {
                         onClickSendSMS = { text ->
                             if (hasPermission) {
                                 smsManager.sendTextMessage(
-                                    "5195910448", // recipient
+                                    phoneNumber, // recipient
                                     null,
                                     text, // message
                                     null,
