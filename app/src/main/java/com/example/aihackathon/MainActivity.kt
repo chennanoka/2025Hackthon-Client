@@ -1,12 +1,16 @@
 package com.example.aihackathon
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.speech.RecognizerIntent
+import android.telephony.SmsManager
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -49,11 +53,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import com.example.aihackathon.ui.theme.AIHackathonTheme
 import java.util.Locale
 
@@ -82,10 +88,6 @@ class MainActivity : ComponentActivity() {
 
                     var selectedOption by remember { mutableStateOf(options[0]) }
 
-
-                    val smsNumber = "1234567890"
-                    val smsText = "Hello from my app!"
-
                     // Launcher for the RecognizerIntent
                     val speechLauncher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.StartActivityForResult()
@@ -97,6 +99,33 @@ class MainActivity : ComponentActivity() {
                                 spokenText = matches[0] // take first result
                             }
                         }
+                    }
+
+                    val context = LocalContext.current
+                    val smsManager = SmsManager.getDefault()
+
+                    var hasPermission by remember {
+                        mutableStateOf(
+                            ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.SEND_SMS
+                            ) == PackageManager.PERMISSION_GRANTED
+                        )
+                    }
+
+                    val smslauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.RequestPermission()
+                    ) { granted ->
+                        hasPermission = granted
+
+                        smsManager.sendTextMessage(
+                            "x", // recipient
+                            null,
+                            textAreaText, // message
+                            null,
+                            null
+                        )
+                        Toast.makeText(context, "SMS Sent!", Toast.LENGTH_SHORT).show()
                     }
 
                     LaunchedEffect(spokenText) {
@@ -171,35 +200,25 @@ class MainActivity : ComponentActivity() {
                         },
                         onShowErrorDialogChanged = {
                             showErrorDialog = it
+                        },
+                        onClickSendSMS = { text ->
+                            if (hasPermission) {
+                                smsManager.sendTextMessage(
+                                    "5195910448", // recipient
+                                    null,
+                                    text, // message
+                                    null,
+                                    null
+                                )
+                                Toast.makeText(context, "SMS Sent!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                smslauncher.launch(Manifest.permission.SEND_SMS)
+                            }
                         }
                     )
                 }
             }
         }
-    }
-}
-
-fun sendSMS(smsNumber: String, smsText: String, context: Context) {
-    val intent = Intent(Intent.ACTION_VIEW).apply {
-        data = Uri.parse("smsto:$smsNumber") // "smsto:" ensures only SMS apps respond
-        putExtra("sms_body", smsText)
-    }
-
-    if (intent.resolveActivity(context.packageManager) != null) {
-        context.startActivity(intent)
-    }
-}
-
-fun sendEmail(email:String, subject:String,smailText:String, context: Context) {
-    val intent = Intent(Intent.ACTION_SENDTO).apply {
-        data = Uri.parse("mailto:") // only email apps should handle this
-        putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
-        putExtra(Intent.EXTRA_SUBJECT, subject)
-        putExtra(Intent.EXTRA_TEXT, smailText)
-    }
-
-    if (intent.resolveActivity(context.packageManager) != null) {
-        context.startActivity(intent)
     }
 }
 
@@ -217,9 +236,10 @@ fun Greeting(
     onSelected: (String) -> Unit = {},
     onClickButton: () -> Unit = {},
     onShowDialogChanged: (Boolean) -> Unit = {},
-    onConfirmSendClick: () -> Unit = {},
     onShowTextAreaTextChanged: (String) -> Unit = {},
     onShowErrorDialogChanged: (Boolean) -> Unit = {},
+    onClickSendSMS: (String) -> Unit = {},
+    onClickSendEmail: (String) -> Unit = {},
 ) {
 
     Box(
@@ -309,7 +329,14 @@ fun Greeting(
                                 Text("Cancel")
                             }
 
-                            TextButton(onClick = { onConfirmSendClick() }) {
+                            TextButton(onClick = {
+                                if (selectedOption == "sms") {
+                                    onClickSendSMS(textAreaText)
+                                } else {
+                                    onClickSendEmail(textAreaText)
+                                }
+                                onShowDialogChanged(false)
+                            }) {
                                 Text("OK")
                             }
 

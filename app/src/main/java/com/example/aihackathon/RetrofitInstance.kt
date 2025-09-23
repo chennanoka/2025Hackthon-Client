@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 object RetrofitClient {
 
 
-    private const val BASE_URL = "http://10.43.68.141:8080/" // Example API
+    private const val BASE_URL = "http://10.0.0.243:8080/" // Example API
 
 
     var client: OkHttpClient = OkHttpClient.Builder()
