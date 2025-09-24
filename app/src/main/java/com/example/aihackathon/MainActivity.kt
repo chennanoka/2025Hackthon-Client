@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.speech.RecognizerIntent
 import android.telephony.SmsManager
@@ -18,7 +17,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,7 +52,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -65,7 +62,7 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
-    val phoneNumber = "x"
+    val phoneNumber = "5195910448"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,7 +102,6 @@ class MainActivity : ComponentActivity() {
                     }
 
                     val context = LocalContext.current
-                    val smsManager = SmsManager.getDefault()
 
                     var hasPermission by remember {
                         mutableStateOf(
@@ -121,14 +117,9 @@ class MainActivity : ComponentActivity() {
                     ) { granted ->
                         hasPermission = granted
 
-                        smsManager.sendTextMessage(
-                            phoneNumber, // recipient
-                            null,
-                            textAreaText, // message
-                            null,
-                            null
-                        )
-                        Toast.makeText(context, "SMS Sent!", Toast.LENGTH_SHORT).show()
+                        if (granted) {
+                            sendSMS(context, phoneNumber, textAreaText)
+                        }
                     }
 
                     LaunchedEffect(spokenText) {
@@ -145,9 +136,9 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     if (response.isSuccessful) {
                                         responseState = response.body()
-                                        textAreaText = responseState?.extra ?: ""
+                                        textAreaText = responseState?.message ?: ""
                                         showDialog = true
-                                        selectedOption = responseState?.type?:"email"
+                                        selectedOption = responseState?.type ?: "email"
                                         Log.d("AIRESPONSE-onResponse", "success")
                                     } else {
                                         Log.d("AIRESPONSE-onResponse", "Error")
@@ -206,21 +197,30 @@ class MainActivity : ComponentActivity() {
                         },
                         onClickSendSMS = { text ->
                             if (hasPermission) {
-                                smsManager.sendTextMessage(
-                                    phoneNumber, // recipient
-                                    null,
-                                    text, // message
-                                    null,
-                                    null
-                                )
-                                Toast.makeText(context, "SMS Sent!", Toast.LENGTH_SHORT).show()
+                                sendSMS(context, phoneNumber, text)
                             } else {
                                 smslauncher.launch(Manifest.permission.SEND_SMS)
+
                             }
-                        }
-                    )
+                        })
                 }
             }
+        }
+    }
+
+
+    fun sendSMS(context: Context, phoneNumber: String, text: String) {
+        if (text.isEmpty()) {
+            SmsManager.getDefault().sendTextMessage(
+                phoneNumber, // recipient
+                null,
+                text, // message
+                null,
+                null
+            )
+            Toast.makeText(context, "SMS Sent!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Send empty message? No way!", Toast.LENGTH_SHORT).show()
         }
     }
 }
@@ -407,8 +407,6 @@ fun InProgressBox(
 }
 
 
-
-
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
@@ -417,7 +415,7 @@ fun GreetingPreview() {
             modifier = Modifier.fillMaxSize(),
             responseState = MessageResponse(
                 route = "broadcast/project/1",
-                extra = "This is a sample extra text.",
+                message = "This is a sample extra text.",
                 type = "email"
             ),
             showDialog = true,
@@ -435,7 +433,7 @@ fun GreetingPreviewError() {
             modifier = Modifier.fillMaxSize(),
             responseState = MessageResponse(
                 route = "broadcast/project/1",
-                extra = "This is a sample extra text.",
+                message = "This is a sample extra text.",
                 type = "email"
             ),
             showErrorDialog = true,
@@ -453,7 +451,7 @@ fun GreetingPreviewInProgress() {
             modifier = Modifier.fillMaxSize(),
             responseState = MessageResponse(
                 route = "broadcast/project/1",
-                extra = "This is a sample extra text.",
+                message = "This is a sample extra text.",
                 type = "email"
             ),
             showInProgress = true,
@@ -464,7 +462,6 @@ fun GreetingPreviewInProgress() {
 }
 
 
-
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreviewDone() {
@@ -473,7 +470,7 @@ fun GreetingPreviewDone() {
             modifier = Modifier.fillMaxSize(),
             responseState = MessageResponse(
                 route = "broadcast/project/1",
-                extra = "This is a sample extra text.",
+                message = "This is a sample extra text.",
                 type = "email"
             ),
             showInProgress = false,

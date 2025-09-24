@@ -11,7 +11,7 @@ data class MessageRequest(
 
 data class MessageResponse(
     val route: String,
-    val extra: String,
+    val message: String,
     val type: String,
 )
 
