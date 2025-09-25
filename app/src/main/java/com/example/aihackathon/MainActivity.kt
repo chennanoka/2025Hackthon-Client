@@ -233,7 +233,7 @@ class MainActivity : ComponentActivity() {
     }
 
     fun sendSMS(context: Context, phoneNumber: String, text: String) {
-        if (text.isEmpty()) {
+        if (!text.isEmpty()) {
             SmsManager.getDefault().sendTextMessage(
                 phoneNumber, // recipient
                 null,
@@ -293,7 +293,6 @@ fun Greeting(
 
         BasicAlertDialog(
             onDismissRequest = {
-                onShowDialogChanged(false)
             },
             content = {
                 Surface(
