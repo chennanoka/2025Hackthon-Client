@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.speech.RecognizerIntent
 import android.telephony.SmsManager
@@ -195,6 +196,9 @@ class MainActivity : ComponentActivity() {
                         onShowErrorDialogChanged = {
                             showErrorDialog = it
                         },
+                        onClickSendEmail = {
+                            sendEmail(context, arrayOf("nan@gobridgit.com"),"Subject of email",textAreaText)
+                        },
                         onClickSendSMS = { text ->
                             if (hasPermission) {
                                 sendSMS(context, phoneNumber, text)
@@ -208,6 +212,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    fun sendEmail(
+        context: Context,
+        to: Array<String>,
+        subject: String,
+        body: String
+    ) {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "message/rfc822" // email MIME type
+            putExtra(Intent.EXTRA_EMAIL, to)
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+            putExtra(Intent.EXTRA_TEXT, body)
+        }
+
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(intent)
+        } else {
+            Toast.makeText(context, "No email client find!", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     fun sendSMS(context: Context, phoneNumber: String, text: String) {
         if (text.isEmpty()) {
